@@ -1,8 +1,12 @@
 {
   "name": "project-2",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "engines": {
+    "node": "12.16.0",
+    "npm": "6.13.7"
+  },
+  "description": "My second project, a revamped Infinite Pictionary",
+  "main": "./server/app.js",
   "scripts": {
     "buildLoginBundle": "babel ./client/login ./client/helper --presets @babel/preset-react --out-file ./hosted/loginBundle.js",
     "buildAppBundle": "babel ./client/app ./client/helper --presets @babel/preset-react --out-file ./hosted/bundle.js",
