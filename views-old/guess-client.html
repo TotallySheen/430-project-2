@@ -1,0 +1,153 @@
+<html>
+  <head>
+    <title>Infinite Pictionary</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
+    <link href="/default-styles.css" type="text/css" rel="stylesheet" />
+    <script>
+      let storedImages = [];
+      let currentImage = 0;
+      
+      // grabs the data for one image/name combo and creates html
+      const handleResponse = (e) => {
+          const obj = JSON.parse(e.target.response);
+
+          const output = `
+          <img src="${obj.url}" alt="${obj.name}" id="guessPic" style="margin: auto;display: block" width="800" height="600">
+          <p class="output" style="text-align:center">Name this picture!</p>
+          <p class="output" style="text-align:center"><input type="text" id="picName"></p>
+          <p class="output" style="text-align:center"><button id="btnSubmit">SUBMIT</button></p>
+          <p class="output" style="text-align:center" id="statusBox">Awaiting guess...</p>`;
+
+          outputContainer.innerHTML = output;
+          scrollContainer.style.display="none";
+          document.querySelector("#btnSubmit").addEventListener("click", makeGuess);
+      }
+      // grabs the data for multiple images/names and creates html
+      const handleResponses = (e) => {
+        storedImages = JSON.parse(e.target.response);
+
+        const output = `
+          <img src="${storedImages[0].url}" alt="${storedImages[0].name}" id="guessPic" style="margin: auto;display: block" width="800" height="600">
+          <p class="output" style="text-align:center">Name this picture!</p>
+          <p class="output" style="text-align:center"><input type="text" id="picName"></p>
+          <p class="output" style="text-align:center"><button id="btnSubmit">SUBMIT</button></p>
+          <p class="output" style="text-align:center" id="statusBox">Awaiting guess...</p>`;
+
+          outputContainer.innerHTML = output;
+          scrollContainer.style.display="block";
+          btnPrev.disabled = true;
+          btnNext.disabled = false;
+          currentImage = 0;
+          
+          document.querySelector("#btnSubmit").addEventListener("click", makeGuess);
+      }
+      // sets up an xhr GET for the various numbers of images requested
+      const downloadImage = (e) => {
+        const xhr = new XMLHttpRequest();
+        let URL;
+        
+        if (numGuesses.value == 1){
+            URL = '/random-image';
+            xhr.onload = handleResponse;
+        }
+        else{
+            URL = `/random-images?limit=${numGuesses.value}`;
+            xhr.onload = handleResponses;
+        }
+
+        xhr.open("GET",URL);
+
+        xhr.setRequestHeader('Accept',"application/javascript");
+        xhr.send();
+      }
+      // handles player guessing
+      const makeGuess = (e) => {
+        if (picName.value.toLowerCase().replace(/\s/g,'') == guessPic.alt){
+          statusBox.innerHTML = "Correct!";
+        }
+        else{
+          statusBox.innerHTML = "Wrong :(";
+        }
+      }
+      // scrolling
+      const nextImage = () => {
+        if (currentImage >= storedImages.length - 1){
+            return;
+        }
+        if (currentImage == 0){
+            btnPrev.disabled = false;
+        }
+        currentImage++;
+        const output = `
+        <img src="${storedImages[currentImage].url}" alt="${storedImages[currentImage].name}" id="guessPic" style="margin: auto;display: block" width="800" height="600">
+        <p class="output" style="text-align:center">Name this picture!</p>
+        <p class="output" style="text-align:center"><input type="text" id="picName"></p>
+        <p class="output" style="text-align:center"><button id="btnSubmit">SUBMIT</button></p>
+        <p class="output" style="text-align:center" id="statusBox">Awaiting guess...</p>`;
+
+        outputContainer.innerHTML = output;
+        document.querySelector("#btnSubmit").addEventListener("click", makeGuess);
+        if (currentImage >= storedImages.length - 1){
+            btnNext.disabled = true;
+        }
+      }
+      // scrolling
+      const prevImage = () => {
+        if (currentImage == 0){
+            return;
+        }
+        if (currentImage >= storedImages.length - 1){
+            btnNext.disabled = false;
+        }
+        currentImage--;
+        const output = `
+        <img src="${storedImages[currentImage].url}" alt="${storedImages[currentImage].name}" id="guessPic" style="margin: auto;display: block" width="800" height="600">
+        <p class="output" style="text-align:center">Name this picture!</p>
+        <p class="output" style="text-align:center"><input type="text" id="picName"></p>
+        <p class="output" style="text-align:center"><button id="btnSubmit">SUBMIT</button></p>
+        <p class="output" style="text-align:center" id="statusBox">Awaiting guess...</p>`;
+
+        outputContainer.innerHTML = output;
+        document.querySelector("#btnSubmit").addEventListener("click", makeGuess);
+        if (currentImage == 0){
+            btnPrev.disabled = true;
+        }
+      }
+      
+      const init = () => {
+        document.querySelector("#btnGuess").addEventListener("click", downloadImage);
+        document.querySelector("#btnNext").addEventListener("click", nextImage);
+        document.querySelector("#btnPrev").addEventListener("click", prevImage);
+      }
+      
+      window.onload = init;
+     
+    </script>
+  </head>
+  <body>
+    <header>
+      <h1>Infinite Pictionary</h1>
+    </header>
+    <nav>
+        <div><a href="/">HOME</a></div>
+        <div><a href="/guess">GUESS</a></div>
+        <div><a href="/make">MAKE</a></div>
+        <div><a href="/admin">ADMIN</a></div>
+    </nav>
+    <section>
+      <div class="block">
+        <label for="numGuesses">How Many Images?</label>
+        <input type="number" id="numGuesses" name="numGuesses" min="1" value=1>
+        <button id="btnGuess">GUESS</button>
+      </div>
+      <div id="outputContainer">
+        
+      </div>
+      <div class="block" id="scrollContainer" style="display: none;">
+          <button id="btnPrev">PREVIOUS</button>
+          <button id="btnNext">NEXT</button>
+      </div>
+    </section>
+    
+  </body>
+</html>

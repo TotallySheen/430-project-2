@@ -1,0 +1,73 @@
+<html>
+  <head>
+    <title>Infinite Pictionary</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
+    <link href="/default-styles.css" type="text/css" rel="stylesheet" />
+    <script>
+        let images = [];
+        
+        // grabs every image and sets up the html
+        const handleResponse = (e) => {
+            images = JSON.parse(e.target.response);
+            output = ``;
+            for (let i = 0; i < images.length; i++){
+                output += `
+                <div class='adminBlock'>
+                    <img src='${images[i].url}' alt='${images[i].name}' width=400 height=300><br>
+                    <input type="text" value="${images[i].name}" class="edit" id="edit${i}" width=400><br>
+                    <button class="save" id="save${i}" width=200 disabled>SAVE NAME</button>
+                    <button class="delete" id="delete${i}" width=200 disabled>DELETE</button>
+                </div>`
+            }
+            imageContainer.innerHTML = output;
+
+            const saveButtons = document.querySelectorAll(".save");
+            const deleteButtons = document.querySelectorAll(".delete");
+            for (let s of saveButtons){
+                s.addEventListener("click", saveName)
+            }
+            for (let d of deleteButtons){
+                d.addEventListener("click", deleteImage)
+            }
+        }
+
+        // changes the name of the desired image
+        const saveName = (e) => {
+            //let nameFieldId = 'edit' + e.target.id.replace('save','');
+            //let newName = document.querySelector(nameFieldId).value;
+        }
+
+        const deleteImage = (e) => {
+            // might not add
+        }
+        
+        const init = () => {
+            const URL = '/all-images';
+            const xhr = new XMLHttpRequest();
+            xhr.onload = handleResponse;
+            xhr.open("GET",URL);
+
+            xhr.setRequestHeader('Accept',"application/javascript");
+            xhr.send();
+        }
+
+        window.onload = init;
+    </script>
+  </head>
+  <body>
+    <header>
+      <h1>Infinite Pictionary</h1>
+    </header>
+    <nav>
+        <div><a href="/">HOME</a></div>
+        <div><a href="/guess">GUESS</a></div>
+        <div><a href="/make">MAKE</a></div>
+        <div><a href="/admin">ADMIN</a></div>
+      </nav>
+    
+    <div id="imageContainer">
+        
+    </div>
+    
+  </body>
+</html>

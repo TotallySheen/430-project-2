@@ -1,0 +1,151 @@
+<html>
+    <head>
+        <title>Infinite Pictionary</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
+        <link href="/assets/default-styles.css" type="text/css" rel="stylesheet" />
+        <style>
+            
+          </style>
+          <script>
+            let ctx,canvas;
+            let canvasWidth = 800;
+            let canvasHeight = 600;
+            
+            // Credit for canvas drawing code
+            // https://stackoverflow.com/questions/2368784/draw-on-html5-canvas-using-a-mouse
+            
+            // last known position
+            let pos = { x: 0, y: 0 };
+
+            // new position from mouse event
+            const setPosition = (e) => {
+                try{
+                    let rect = e.target.getBoundingClientRect();
+                    let mouseX = e.clientX - rect.x;
+                    let mouseY = e.clientY - rect.y;
+                    pos.x = mouseX;
+                    pos.y = mouseY;
+                } catch (error) {
+
+                }
+            }
+
+            const draw = (e) => {
+                // mouse left button must be pressed
+                if (e.buttons !== 1) return;
+
+                ctx.beginPath(); // begin
+
+                ctx.lineWidth = 5;
+                ctx.lineCap = 'round';
+                ctx.strokeStyle = 'black';
+
+                ctx.moveTo(pos.x, pos.y); // from
+                setPosition(e);
+                ctx.lineTo(pos.x, pos.y); // to
+
+                ctx.stroke(); // draw it!
+            }
+            // clears canvas
+            const clear = (e) => {
+                ctx.clearRect(0,0,canvasWidth,canvasHeight);
+            }
+            // sets up an xhr to save the canvas image to the server
+            const saveImage = (e, picForm) => {
+                e.preventDefault();
+                
+                document.querySelector("#status").innerHTML = "<p>Processing...</p>";
+                
+                // checking if a name exists
+                const name = document.querySelector("#drawingName").value.toLowerCase().replace(/\s/g,'-');
+                if (name === ""){
+                    document.querySelector("#status").innerHTML = "<p class='fail'>ERROR: Please enter a name</p>";
+                    return;
+                }
+                // uploading the image to the server with the specified name
+                const canvas = document.querySelector("canvas");
+                const image = canvas.toDataURL("image/png");
+                const params = `image=${image}&name=${name}`;
+                const xhr = new XMLHttpRequest();
+                xhr.open("POST", "/add-pic");
+                xhr.setRequestHeader('Accept','application/json');
+                xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                xhr.onload = () => {
+                    handleResponse(xhr);
+                } 
+                xhr.send(params);
+            }
+            // handles the status code callback
+            const handleResponse = (xhr) => {
+                const status = document.querySelector("#status"); 
+                switch(xhr.status){
+                case 200:
+                    status.innerHTML = '<b>Success!</b>';
+                    break;
+                case 201:
+                    status.innerHTML = '<b>Created!</b>';
+                    break;
+                case 204:
+                    status.innerHTML = '<b>Updated (No Content)!</b>';
+                    break;
+                case 400:
+                    status.innerHTML = '<b>Bad Request!</b>';
+                    break;
+                default:
+                    status.innerHTML = '<b>Error code not implemented by client</b>';
+                }
+            }
+
+            const init = () => {
+                // canvas stuff
+                canvas = document.querySelector('canvas');
+
+                ctx = canvas.getContext('2d');
+                
+                document.querySelector('#btnClear').addEventListener("click",clear);
+
+                document.addEventListener('mousemove', draw);
+                document.addEventListener('mousedown', setPosition);
+                document.addEventListener('mouseenter', setPosition);
+
+                const pictureForm = document.querySelector("#pictureForm");
+
+                const addImage = (e) => saveImage(e, pictureForm);
+
+                pictureForm.addEventListener('submit', addImage);
+            }
+
+            window.onload = init;
+            
+          </script>
+    </head>
+    <body>
+        <header>
+          <h1>Infinite Pictionary</h1>
+        </header>
+          <nav>
+            <div><a href="/">HOME</a></div>
+            <div><a href="/guess">GUESS</a></div>
+            <div><a href="/make">MAKE</a></div>
+            <div><a href="/admin">ADMIN</a></div>
+          </nav>
+        
+        <section>
+            <h2>Click to Draw!</h2>
+            <canvas width="800" height="600" id="drawing"></canvas>
+            <button class="block" id="btnClear">CLEAR</button>
+            
+            <form id="pictureForm" action="/add-pic" method="POST">
+                <label for="drawingName">Image Name: </label>
+                <input type="text" name="drawingName" id="drawingName">
+                <input type="text" style="display: none;" name="imageURL" id="imageURL">
+                <input class="block" id="btnSubmit" type="submit" value="SUBMIT">
+            </form>
+            
+            <div id="status" class="block">
+
+            </div>
+        </section>
+        
+      </body>
+</html>
