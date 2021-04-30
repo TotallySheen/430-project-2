@@ -10,6 +10,10 @@ const signupPage = (req, res) => {
   res.render('signup', { csrfToken: req.csrfToken() });
 };
 
+const guessPage = (req, res) => {
+  res.render('guess', { csrfToken: req.csrfToken() });
+};
+
 const logout = (req, res) => {
   req.session.destroy();
   res.redirect('/');
@@ -64,7 +68,7 @@ const signup = (request, response) => {
 
     newAccount.save().then(() => {
       req.session.account = Account.AccountModel.toAPI(newAccount);
-      return res.json({ redirect: '/maker' });
+      return res.json({ redirect: '/make' });
     }).catch((err) => {
       console.log(err);
 
@@ -95,4 +99,5 @@ module.exports = {
   signup,
   getToken,
   signupPage,
+  guessPage,
 };

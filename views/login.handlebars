@@ -18,7 +18,7 @@
         
         URL = '/getToken';
         xhr.onload = (result) => {
-            document.querySelector("#csrf").value = result.csrfToken;
+            document.querySelector("#csrf").value = JSON.parse(result).csrfToken;
         };
 
         xhr.open("GET",URL);
