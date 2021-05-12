@@ -45,9 +45,7 @@ DrawingSchema.statics.findByOwner = (ownerId, callback) => {
   return DrawingModel.find(search).select('name encode').lean().exec(callback);
 };
 
-DrawingSchema.statics.findAll = (callback) => {
-  return DrawingModel.find().select('name encode').lean().exec(callback);
-}
+DrawingSchema.statics.findAll = (callback) => DrawingModel.find().select('name encode').lean().exec(callback);
 
 DrawingModel = mongoose.model('Drawing', DrawingSchema);
 

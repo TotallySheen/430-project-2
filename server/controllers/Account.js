@@ -93,13 +93,13 @@ const getUserScore = (request, response) => {
 
     return res.json({ username: req.username, score: doc.score });
   });
-}
-
+};
+/*
 const updateUserScore = (request, response) => {
   const req = request;
   const res = response;
-}
-
+};
+*/
 const getToken = (request, response) => {
   const req = request;
   const res = response;
@@ -120,4 +120,5 @@ module.exports = {
   signupPage,
   guessPage,
   getUserScore,
+  // updateUserScore,
 };
