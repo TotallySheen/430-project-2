@@ -30,11 +30,24 @@ const handleSuccess = (e) => {
 const handleCorrect = (e) => {
     $("#errorMessage").text("Correct! +1 point");
     $("#errMsgBox").animate({width:'toggle'},350);
+    localScore++;
+    updateScore();
 }
 
 const handleIncorrect = (e) => {
     $("#errorMessage").text("Incorrect! -1 point");
     $("#errMsgBox").animate({width:'toggle'},350);
+    localScore--;
+    updateScore();
+}
+
+const updateScore = (e) => {
+    document.querySelector("#hiddenScore").value = localScore;
+    document.querySelector("#scoreBox").innerHTML = localName + "'s Score: " + localScore;
+    
+    sendAjax('POST', '/updateScore', $("#scoreForm").serialize(), () => {
+        
+    });
 }
 
 let ctx,canvas;
@@ -43,6 +56,8 @@ let canvasHeight = 600;
 let strokeStyle = 'black';
 let nameToGuess = '';
 let localScore = 0;
+let localName = 'null';
+let token = '';
 
 // Credit for canvas drawing code
 // https://stackoverflow.com/questions/2368784/draw-on-html5-canvas-using-a-mouse
@@ -90,8 +105,11 @@ const clear = (e) => {
 }
 
 const next = (e) => {
-    if (currentImage === storedImages.length - 1) return;
-    if (currentImage === storedImages.length - 2) document.querySelector("#next").disabled = true;
+    if (currentImage === storedImages.length - 1) {
+        let csrf = document.querySelector("#hiddenScoreToken").value;
+        createGuessWindow(csrf);
+        return;
+    };
 
     currentImage++;
 
@@ -99,6 +117,11 @@ const next = (e) => {
     document.querySelector("#guess").disabled = false;
 
     $("#errMsgBox").animate({width:'hide'},350);
+
+    document.querySelector("#guessBox").value = '';
+
+    
+    if (currentImage === storedImages.length - 1) document.querySelector("#next").innerHTML = "RESET";
 
     renderCurrentImage();
 }
@@ -120,6 +143,13 @@ const DrawingForm = (props) => {
     return (
         <div className="drawForm">
             <canvas width="800" height="600" id="drawing"></canvas>
+            <div id="colorContainer">
+                <button className="color" id="blackBtn" value="black"></button>
+                <button className="color" id="blueBtn" value="blue"></button>
+                <button className="color" id="redBtn" value="red"></button>
+                <button className="color" id="yellowBtn" value="yellow"></button>
+                <button className="color" id="greenBtn" value="green"></button>
+            </div>
             <button className="block" id="btnClear">CLEAR</button>
             
             <form id="pictureForm" name="pictureForm"
@@ -139,7 +169,7 @@ const DrawingForm = (props) => {
 }
 
 const PicList = function(props) {
-    if(props.pics.length === 0) {
+    if(props.components.pics.length === 0) {
         return (
             <div className="picList">
                 <h3 className="empty">No Pictures found</h3>
@@ -147,7 +177,7 @@ const PicList = function(props) {
         );
     }
 
-    storedImages = _.shuffle(props.pics);
+    storedImages = _.shuffle(props.components.pics);
 
     return (
         <div className="picList">
@@ -156,10 +186,33 @@ const PicList = function(props) {
                 <input id="guessBox" type="text" name="guess"/>
                 <button id="guess" className="control">GUESS</button>
                 <button id="next" className="control">SKIP ▶</button>
-                <span id="scoreBox">Score: 0</span>
+                <form id="scoreForm" name="scoreForm">
+                    <input type="hidden" id="hiddenScore" name="score" value={props.components.score} />
+                    <input type="hidden" id="hiddenScoreToken" name="_csrf" value={props.components.csrf} />
+                </form>
+                <div id="scoreBox">Score: 0</div>
             </div>
         </div>
     )
+}
+
+const Leaderboard = function(props) { 
+    const sortedAccounts = props.accounts.sort((a, b) => {a.score - b.score})
+    
+    const scoreNodes = sortedAccounts.map(function(account) {
+        return (
+            <div key={account._id} className="leaderboardEntry">
+                <h3 className="accName"> Name: {account.username} </h3>
+                <h3 className="accScore"> Score: {account.score} </h3>
+            </div>
+        )
+    });
+
+    return (
+        <div className="leaderboard">
+            {scoreNodes}
+        </div>
+    );
 }
 
 const DisplayPic = (props) => {
@@ -173,8 +226,9 @@ const LandingNav = function() {
     return (
         <nav className="landingNav">
             <div><a href="/logout">SIGN OUT</a></div>
-            <div id="guessPageButton"><a href="/guess">GUESS</a></div>
-            <div id="makePageButton"><a href="/make">MAKE</a></div>
+            <div id="guessPageButton"><a href="/game">GUESS</a></div>
+            <div id="makePageButton"><a href="/game">MAKE</a></div>
+            <div id="leaderPageButton"><a href="/game">LEADERBOARD</a></div>
         </nav>
         );
 }
@@ -189,22 +243,49 @@ const createMakeWindow = (csrf) => {
     ReactDOM.render(
         <DrawingForm csrf={csrf}/>,
         document.querySelector("#content")
-    )
+    );
+    for (let b of document.querySelectorAll(".color"))
+    {
+        b.addEventListener("click", (e) => {
+            strokeStyle = e.target.value;
+        })
+    }
 }
 
-const createGuessWindow = () => {
+const createGuessWindow = (csrf) => {
+    const props = {
+        pics: [],
+        score: localScore,
+        csrf: csrf,
+    }
+    
     ReactDOM.render(
-        <PicList pics={[]}/>, 
+        <PicList components={props}/>, 
         document.querySelector("#content")
     );
     
-    getDrawingsFromServer();
+    getDrawingsFromServer(csrf);
 }
 
-const getDrawingsFromServer = () => {
+const createLeaderboardWindow = (csrf) => {
+    ReactDOM.render(
+        <Leaderboard accounts={[]}/>,
+        document.querySelector("#content")
+    );
+
+    getScoresFromServer();
+}
+
+const getDrawingsFromServer = (csrf) => {
     sendAjax('GET', '/getDrawings', null, (data) => {
+        const props = {
+            pics: data.drawings,
+            score: localScore,
+            csrf: csrf,
+        }
+        
         ReactDOM.render(
-            <PicList pics={data.drawings} />, 
+            <PicList components={props} />, 
             document.querySelector("#content")
         );
 
@@ -224,8 +305,21 @@ const getDrawingsFromServer = () => {
         }
 
         // getting the user's score
-        
+        sendAjax('GET', '/getScore', null, (data) => {
+            localScore = data.score;
+            localName = data.username;
+            document.querySelector("#scoreBox").innerHTML = data.username + "'s Score: " + data.score;
+        })
     });
+}
+
+const getScoresFromServer = () => {
+    sendAjax('GET', '/getScores', null, (data) => {
+        ReactDOM.render(
+            <Leaderboard accounts={data.accounts} />, 
+            document.querySelector("#content")
+        );
+    })
 }
 
 const renderCurrentImage = () => {
@@ -248,6 +342,7 @@ const setup = function(csrf) {
 
     const makePageButton = document.querySelector("#makePageButton");
     const guessPageButton = document.querySelector("#guessPageButton");
+    const leaderPageButton = document.querySelector("#leaderPageButton");
 
     makePageButton.addEventListener("click", (e) => {
         e.preventDefault();
@@ -258,9 +353,15 @@ const setup = function(csrf) {
 
     guessPageButton.addEventListener("click", (e) => {
         e.preventDefault();
-        createGuessWindow();
+        createGuessWindow(csrf);
         return false;
     });
+
+    leaderPageButton.addEventListener("click", (e) => {
+        e.preventDefault();
+        createLeaderboardWindow(csrf);
+        return false;
+    })
 }
 
 const setupCanvas = () => {

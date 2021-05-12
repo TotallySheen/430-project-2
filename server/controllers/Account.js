@@ -37,7 +37,7 @@ const login = (request, response) => {
 
     req.session.account = Account.AccountModel.toAPI(account);
 
-    return res.json({ redirect: '/make' });
+    return res.json({ redirect: '/game' });
   });
 };
 
@@ -68,7 +68,7 @@ const signup = (request, response) => {
 
     newAccount.save().then(() => {
       req.session.account = Account.AccountModel.toAPI(newAccount);
-      return res.json({ redirect: '/make' });
+      return res.json({ redirect: '/game' });
     }).catch((err) => {
       console.log(err);
 
@@ -81,25 +81,75 @@ const signup = (request, response) => {
   });
 };
 
-const getUserScore = (request, response) => {
+const updatePassword = (request, response) => {
   const req = request;
   const res = response;
 
-  return Account.AccountModel.findByUsername(req.username, (err, doc) => {
+  req.body.username = `${req.body.username}`;
+  req.body.oldPass = `${req.body.oldPass}`;
+  req.body.pass = `${req.body.pass}`;
+  req.body.pass2 = `${req.body.pass2}`;
+
+  if (!req.body.username || !req.body.pass || !req.body.pass2) {
+    return res.status(400).json({ error: 'All fields are required' });
+  }
+
+  if (req.body.pass !== req.body.pass2) {
+    return res.status(400).json({ error: 'Passwords do not match' });
+  }
+
+  return Account.AccountModel.changePassword(req.body.username, req.body.oldPass, req.body.pass,
+    (err, account) => {
+      if (err || !account) {
+        return res.status(401).json({ error: 'Wrong username or password' });
+      }
+
+      req.session.account = Account.AccountModel.toAPI(account);
+
+      return res.json({ redirect: '/game' });
+    });
+};
+
+const getCurrentUserScore = (request, response) => {
+  const req = request;
+  const res = response;
+
+  return Account.AccountModel.findByUsername(req.session.account.username, (err, doc) => {
     if (err) {
       console.log(err);
       return res.status(400).json({ error: 'An error occurred' });
     }
 
-    return res.json({ username: req.username, score: doc.score });
+    return res.json({ username: doc.username, score: doc.score });
   });
 };
-/*
+
+const getAllUserScores = (request, response) => {
+  const req = request;
+  const res = response;
+
+  return Account.AccountModel.findAll((err, docs) => {
+    if (err) {
+      console.log(err);
+      return res.status(400).json({ error: 'An error occurred' });
+    }
+
+    return res.json({ accounts: docs, username: req.session.account.username });
+  });
+};
+
 const updateUserScore = (request, response) => {
   const req = request;
   const res = response;
+
+  // credit for this code:
+  // https://stackoverflow.com/questions/7267102/how-do-i-update-upsert-a-document-in-mongoose
+  const search = { username: req.session.account.username };
+  Account.AccountModel.findOneAndUpdate(search, { score: req.body.score }, (err) => {
+    if (err) return res.send(400, { error: 'An error occurred' });
+    return res.json({});
+  });
 };
-*/
 const getToken = (request, response) => {
   const req = request;
   const res = response;
@@ -119,6 +169,8 @@ module.exports = {
   getToken,
   signupPage,
   guessPage,
-  getUserScore,
-  // updateUserScore,
+  getCurrentUserScore,
+  updateUserScore,
+  updatePassword,
+  getAllUserScores,
 };

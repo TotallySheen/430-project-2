@@ -17,7 +17,7 @@ const postDrawing = (req, res) => {
 
   const drawingPromise = newDrawing.save();
 
-  drawingPromise.then(() => res.json({ redirect: '/make' }));
+  drawingPromise.then(() => res.json({ redirect: '/game' }));
 
   drawingPromise.catch((err) => {
     console.log(err);

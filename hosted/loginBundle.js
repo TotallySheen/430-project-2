@@ -44,12 +44,12 @@ const handlePassChange = e => {
     return false;
   }
 
-  if ($("#pass").val() == '' !== $("#pass2").val()) {
+  if ($("#pass").val() !== $("#pass2").val()) {
     handleError("Passwords do not match");
     return false;
   }
 
-  sendAjax('POST', $("#passChangeForm").attr("action"), $("#passChangeForm").serialize(), redirect);
+  sendAjax('POST', $("#changePassForm").attr("action"), $("#changePassForm").serialize(), redirect);
 };
 
 const LoginWindow = props => {
@@ -125,6 +125,53 @@ const SignupWindow = props => {
   }));
 };
 
+const ChangePassWindow = props => {
+  return /*#__PURE__*/React.createElement("form", {
+    id: "changePassForm",
+    name: "changePassForm",
+    onSubmit: handlePassChange,
+    action: "/changePass",
+    method: "POST",
+    className: "mainForm"
+  }, /*#__PURE__*/React.createElement("label", {
+    htmlFor: "username"
+  }, "Username: "), /*#__PURE__*/React.createElement("input", {
+    id: "user",
+    type: "text",
+    name: "username",
+    placeholder: "username"
+  }), /*#__PURE__*/React.createElement("label", {
+    htmlFor: "oldPass"
+  }, "Old Password: "), /*#__PURE__*/React.createElement("input", {
+    id: "oldPass",
+    type: "text",
+    name: "oldPass",
+    placeholder: "password"
+  }), /*#__PURE__*/React.createElement("label", {
+    htmlFor: "pass"
+  }, "New Password: "), /*#__PURE__*/React.createElement("input", {
+    id: "pass",
+    type: "text",
+    name: "pass",
+    placeholder: "new password"
+  }), /*#__PURE__*/React.createElement("label", {
+    htmlFor: "pass2"
+  }, "Confirm Password: "), /*#__PURE__*/React.createElement("input", {
+    id: "pass2",
+    type: "text",
+    name: "pass2",
+    placeholder: "retype password"
+  }), /*#__PURE__*/React.createElement("input", {
+    type: "hidden",
+    name: "_csrf",
+    value: props.csrf
+  }), /*#__PURE__*/React.createElement("input", {
+    className: "formSubmit",
+    type: "submit",
+    value: "Submit"
+  }));
+};
+
 const LoginNav = () => {
   return /*#__PURE__*/React.createElement("nav", {
     className: "loginNav"
@@ -138,7 +185,12 @@ const LoginNav = () => {
   }, /*#__PURE__*/React.createElement("a", {
     id: "signupButton",
     href: "/signup"
-  }, "SIGN UP")));
+  }, "SIGN UP")), /*#__PURE__*/React.createElement("div", {
+    className: "navlink"
+  }, /*#__PURE__*/React.createElement("a", {
+    id: "changePassButton",
+    href: "/changePass"
+  }, "CHANGE PASSWORD")));
 };
 
 const createLoginWindow = csrf => {
@@ -153,10 +205,17 @@ const createSignupWindow = csrf => {
   }), document.querySelector("#content"));
 };
 
+const createChangePassWindow = csrf => {
+  ReactDOM.render( /*#__PURE__*/React.createElement(ChangePassWindow, {
+    csrf: csrf
+  }), document.querySelector("#content"));
+};
+
 const setup = csrf => {
   ReactDOM.render( /*#__PURE__*/React.createElement(LoginNav, null), document.querySelector("#nav"));
   const loginButton = document.querySelector("#loginButton");
   const signupButton = document.querySelector("#signupButton");
+  const changePassButton = document.querySelector("#changePassButton");
   signupButton.addEventListener("click", e => {
     e.preventDefault();
     createSignupWindow(csrf);
@@ -165,6 +224,11 @@ const setup = csrf => {
   loginButton.addEventListener("click", e => {
     e.preventDefault();
     createLoginWindow(csrf);
+    return false;
+  });
+  changePassButton.addEventListener("click", e => {
+    e.preventDefault();
+    createChangePassWindow(csrf);
     return false;
   });
   createLoginWindow(csrf); //default view

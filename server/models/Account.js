@@ -83,6 +83,52 @@ AccountSchema.statics.authenticate = (username, password, callback) => {
   });
 };
 
+AccountSchema.statics.changePassword = (username, oldPass, newPass, callback) => {
+  AccountModel.findByUsername(username, (err, doc) => {
+    if (err) {
+      return callback(err);
+    }
+
+    if (!doc) {
+      return callback();
+    }
+
+    return validatePassword(doc, oldPass, (result) => {
+      if (result !== true) {
+        return callback(null, doc);
+      }
+
+      return AccountModel.generateHash(newPass, (salt, hash) => {
+        const newParams = {
+          salt,
+          password: hash,
+        };
+        AccountModel.findOneAndUpdate({ username }, newParams, callback);
+      });
+    });
+  });
+};
+
+AccountSchema.statics.updateScore = (name, newScore, callback) => {
+  AccountModel.findByUsername(name, (err, doc) => {
+    if (err) {
+      return callback(err);
+    }
+
+    if (!doc) {
+      return callback();
+    }
+
+    const search = {
+      username: name,
+    };
+
+    return AccountModel.updateOne(search, { score: newScore }).exec(callback);
+  });
+};
+
+AccountSchema.statics.findAll = (callback) => AccountModel.find().select('username score').lean().exec(callback);
+
 AccountModel = mongoose.model('Account', AccountSchema);
 
 module.exports.AccountModel = AccountModel;

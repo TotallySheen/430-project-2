@@ -43,12 +43,12 @@ const handlePassChange = (e) => {
         return false;
     }
 
-    if($("#pass").val() == '' !== $("#pass2").val()) {
+    if($("#pass").val() !== $("#pass2").val()) {
         handleError("Passwords do not match");
         return false;
     }
 
-    sendAjax('POST', $("#passChangeForm").attr("action"), $("#passChangeForm").serialize(), redirect);
+    sendAjax('POST', $("#changePassForm").attr("action"), $("#changePassForm").serialize(), redirect);
 }
 
 const LoginWindow = (props) => {
@@ -89,11 +89,34 @@ const SignupWindow = (props) => {
     );
 }
 
+const ChangePassWindow = (props) => {
+    return (
+        <form id="changePassForm" name="changePassForm"
+            onSubmit={handlePassChange}
+            action="/changePass"
+            method="POST"
+            className="mainForm"
+        >
+            <label htmlFor="username">Username: </label>
+            <input id="user" type="text" name="username" placeholder="username"/>
+            <label htmlFor="oldPass">Old Password: </label>
+            <input id="oldPass" type="text" name="oldPass" placeholder="password"/>
+            <label htmlFor="pass">New Password: </label>
+            <input id="pass" type="text" name="pass" placeholder="new password"/>
+            <label htmlFor="pass2">Confirm Password: </label>
+            <input id="pass2" type="text" name="pass2" placeholder="retype password"/>
+            <input type="hidden" name="_csrf" value={props.csrf}/>
+            <input className="formSubmit" type="submit" value="Submit"/>
+        </form>
+        );
+}
+
 const LoginNav = () => {
     return (
         <nav className="loginNav">
             <div className="navlink"><a id="loginButton" href="/login">LOGIN</a></div>
             <div className="navlink"><a id="signupButton" href="/signup">SIGN UP</a></div>
+            <div className="navlink"><a id="changePassButton" href="/changePass">CHANGE PASSWORD</a></div>
         </nav>
     );
 }
@@ -112,6 +135,13 @@ const createSignupWindow = (csrf) => {
     );
 };
 
+const createChangePassWindow = (csrf) => {
+    ReactDOM.render(
+        <ChangePassWindow csrf={csrf} />,
+        document.querySelector("#content")
+    );
+};
+
 const setup = (csrf) => {
     ReactDOM.render(
         <LoginNav/>,
@@ -120,6 +150,7 @@ const setup = (csrf) => {
     
     const loginButton = document.querySelector("#loginButton");
     const signupButton = document.querySelector("#signupButton");
+    const changePassButton = document.querySelector("#changePassButton");
 
     signupButton.addEventListener("click", (e) => {
         e.preventDefault();
@@ -130,6 +161,12 @@ const setup = (csrf) => {
     loginButton.addEventListener("click", (e) => {
         e.preventDefault();
         createLoginWindow(csrf);
+        return false;
+    });
+
+    changePassButton.addEventListener("click", (e) => {
+        e.preventDefault();
+        createChangePassWindow(csrf);
         return false;
     });
 

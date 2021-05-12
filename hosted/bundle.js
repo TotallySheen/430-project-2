@@ -32,6 +32,8 @@ const handleCorrect = e => {
   $("#errMsgBox").animate({
     width: 'toggle'
   }, 350);
+  localScore++;
+  updateScore();
 };
 
 const handleIncorrect = e => {
@@ -39,13 +41,24 @@ const handleIncorrect = e => {
   $("#errMsgBox").animate({
     width: 'toggle'
   }, 350);
+  localScore--;
+  updateScore();
+};
+
+const updateScore = e => {
+  document.querySelector("#hiddenScore").value = localScore;
+  document.querySelector("#scoreBox").innerHTML = localName + "'s Score: " + localScore;
+  sendAjax('POST', '/updateScore', $("#scoreForm").serialize(), () => {});
 };
 
 let ctx, canvas;
 let canvasWidth = 800;
 let canvasHeight = 600;
 let strokeStyle = 'black';
-let nameToGuess = ''; // Credit for canvas drawing code
+let nameToGuess = '';
+let localScore = 0;
+let localName = 'null';
+let token = ''; // Credit for canvas drawing code
 // https://stackoverflow.com/questions/2368784/draw-on-html5-canvas-using-a-mouse
 // last known position
 
@@ -93,14 +106,21 @@ const clear = e => {
 };
 
 const next = e => {
-  if (currentImage === storedImages.length - 1) return;
-  if (currentImage === storedImages.length - 2) document.querySelector("#next").disabled = true;
+  if (currentImage === storedImages.length - 1) {
+    let csrf = document.querySelector("#hiddenScoreToken").value;
+    createGuessWindow(csrf);
+    return;
+  }
+
+  ;
   currentImage++;
   document.querySelector("#next").innerHTML = "SKIP ▶";
   document.querySelector("#guess").disabled = false;
   $("#errMsgBox").animate({
     width: 'hide'
   }, 350);
+  document.querySelector("#guessBox").value = '';
+  if (currentImage === storedImages.length - 1) document.querySelector("#next").innerHTML = "RESET";
   renderCurrentImage();
 };
 
@@ -124,7 +144,29 @@ const DrawingForm = props => {
     width: "800",
     height: "600",
     id: "drawing"
+  }), /*#__PURE__*/React.createElement("div", {
+    id: "colorContainer"
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "color",
+    id: "blackBtn",
+    value: "black"
   }), /*#__PURE__*/React.createElement("button", {
+    className: "color",
+    id: "blueBtn",
+    value: "blue"
+  }), /*#__PURE__*/React.createElement("button", {
+    className: "color",
+    id: "redBtn",
+    value: "red"
+  }), /*#__PURE__*/React.createElement("button", {
+    className: "color",
+    id: "yellowBtn",
+    value: "yellow"
+  }), /*#__PURE__*/React.createElement("button", {
+    className: "color",
+    id: "greenBtn",
+    value: "green"
+  })), /*#__PURE__*/React.createElement("button", {
     className: "block",
     id: "btnClear"
   }, "CLEAR"), /*#__PURE__*/React.createElement("form", {
@@ -157,7 +199,7 @@ const DrawingForm = props => {
 };
 
 const PicList = function (props) {
-  if (props.pics.length === 0) {
+  if (props.components.pics.length === 0) {
     return /*#__PURE__*/React.createElement("div", {
       className: "picList"
     }, /*#__PURE__*/React.createElement("h3", {
@@ -165,7 +207,7 @@ const PicList = function (props) {
     }, "No Pictures found"));
   }
 
-  storedImages = _.shuffle(props.pics);
+  storedImages = _.shuffle(props.components.pics);
   return /*#__PURE__*/React.createElement("div", {
     className: "picList"
   }, /*#__PURE__*/React.createElement("section", {
@@ -182,7 +224,41 @@ const PicList = function (props) {
   }, "GUESS"), /*#__PURE__*/React.createElement("button", {
     id: "next",
     className: "control"
-  }, "SKIP \u25B6")));
+  }, "SKIP \u25B6"), /*#__PURE__*/React.createElement("form", {
+    id: "scoreForm",
+    name: "scoreForm"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "hidden",
+    id: "hiddenScore",
+    name: "score",
+    value: props.components.score
+  }), /*#__PURE__*/React.createElement("input", {
+    type: "hidden",
+    id: "hiddenScoreToken",
+    name: "_csrf",
+    value: props.components.csrf
+  })), /*#__PURE__*/React.createElement("div", {
+    id: "scoreBox"
+  }, "Score: 0")));
+};
+
+const Leaderboard = function (props) {
+  const sortedAccounts = props.accounts.sort((a, b) => {
+    a.score - b.score;
+  });
+  const scoreNodes = sortedAccounts.map(function (account) {
+    return /*#__PURE__*/React.createElement("div", {
+      key: account._id,
+      className: "leaderboardEntry"
+    }, /*#__PURE__*/React.createElement("h3", {
+      className: "accName"
+    }, " Name: ", account.username, " "), /*#__PURE__*/React.createElement("h3", {
+      className: "accScore"
+    }, " Score: ", account.score, " "));
+  });
+  return /*#__PURE__*/React.createElement("div", {
+    className: "leaderboard"
+  }, scoreNodes);
 };
 
 const DisplayPic = props => {
@@ -204,12 +280,16 @@ const LandingNav = function () {
   }, "SIGN OUT")), /*#__PURE__*/React.createElement("div", {
     id: "guessPageButton"
   }, /*#__PURE__*/React.createElement("a", {
-    href: "/guess"
+    href: "/game"
   }, "GUESS")), /*#__PURE__*/React.createElement("div", {
     id: "makePageButton"
   }, /*#__PURE__*/React.createElement("a", {
-    href: "/make"
-  }, "MAKE")));
+    href: "/game"
+  }, "MAKE")), /*#__PURE__*/React.createElement("div", {
+    id: "leaderPageButton"
+  }, /*#__PURE__*/React.createElement("a", {
+    href: "/game"
+  }, "LEADERBOARD")));
 };
 
 const Landing = function () {
@@ -222,19 +302,42 @@ const createMakeWindow = csrf => {
   ReactDOM.render( /*#__PURE__*/React.createElement(DrawingForm, {
     csrf: csrf
   }), document.querySelector("#content"));
+
+  for (let b of document.querySelectorAll(".color")) {
+    b.addEventListener("click", e => {
+      strokeStyle = e.target.value;
+    });
+  }
 };
 
-const createGuessWindow = () => {
+const createGuessWindow = csrf => {
+  const props = {
+    pics: [],
+    score: localScore,
+    csrf: csrf
+  };
   ReactDOM.render( /*#__PURE__*/React.createElement(PicList, {
-    pics: []
+    components: props
   }), document.querySelector("#content"));
-  getDrawingsFromServer();
+  getDrawingsFromServer(csrf);
 };
 
-const getDrawingsFromServer = () => {
+const createLeaderboardWindow = csrf => {
+  ReactDOM.render( /*#__PURE__*/React.createElement(Leaderboard, {
+    accounts: []
+  }), document.querySelector("#content"));
+  getScoresFromServer();
+};
+
+const getDrawingsFromServer = csrf => {
   sendAjax('GET', '/getDrawings', null, data => {
+    const props = {
+      pics: data.drawings,
+      score: localScore,
+      csrf: csrf
+    };
     ReactDOM.render( /*#__PURE__*/React.createElement(PicList, {
-      pics: data.drawings
+      components: props
     }), document.querySelector("#content"));
     document.querySelector("#next").addEventListener("click", e => {
       next();
@@ -248,7 +351,22 @@ const getDrawingsFromServer = () => {
     if (data.drawings.length > 0) {
       currentImage = 0;
       renderCurrentImage();
-    }
+    } // getting the user's score
+
+
+    sendAjax('GET', '/getScore', null, data => {
+      localScore = data.score;
+      localName = data.username;
+      document.querySelector("#scoreBox").innerHTML = data.username + "'s Score: " + data.score;
+    });
+  });
+};
+
+const getScoresFromServer = () => {
+  sendAjax('GET', '/getScores', null, data => {
+    ReactDOM.render( /*#__PURE__*/React.createElement(Leaderboard, {
+      accounts: data.accounts
+    }), document.querySelector("#content"));
   });
 };
 
@@ -263,6 +381,7 @@ const setup = function (csrf) {
   ReactDOM.render( /*#__PURE__*/React.createElement(Landing, null), document.querySelector("#content"));
   const makePageButton = document.querySelector("#makePageButton");
   const guessPageButton = document.querySelector("#guessPageButton");
+  const leaderPageButton = document.querySelector("#leaderPageButton");
   makePageButton.addEventListener("click", e => {
     e.preventDefault();
     createMakeWindow(csrf);
@@ -271,7 +390,12 @@ const setup = function (csrf) {
   });
   guessPageButton.addEventListener("click", e => {
     e.preventDefault();
-    createGuessWindow();
+    createGuessWindow(csrf);
+    return false;
+  });
+  leaderPageButton.addEventListener("click", e => {
+    e.preventDefault();
+    createLeaderboardWindow(csrf);
     return false;
   });
 };
