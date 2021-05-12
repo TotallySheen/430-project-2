@@ -6,71 +6,123 @@ header{
     padding:1em;
   }
 
-  h1{
-    font-family:Georgia, 'Times New Roman', Times, serif;
+h1{
+font-family:Georgia, 'Times New Roman', Times, serif;
+text-align: center;
+}
+
+h2{
     text-align: center;
-  }
+}
 
-  h2{
-      text-align: center;
-  }
-  
-  section{
-    border-bottom:1px dashed gray;
-  }
+section{
+border-bottom:1px dashed gray;
+}
 
-  output{
-      text-align: center;
-      display: block;
-      margin: auto;
-  }
-  
-  canvas{
-      border: 2px solid black;
-      display: block;
-      margin-left: auto;
-      margin-right: auto;
-  }
+output{
+    text-align: center;
+    display: block;
+    margin: auto;
+}
 
-  .block{
-      text-align: center;
-      display: block;
-      margin-top:1em;
-      margin-left: auto;
-      margin-right: auto;
-  }
-
-  .fail{
-      color:red;
-  }
-
-  label, input{
+canvas{
+    border: 2px solid black;
+    display: block;
     margin-left: auto;
     margin-right: auto;
-    display: block;
+}
+
+.block{
     text-align: center;
-  }
-    nav{
-        display: flex;
-        flex-direction: row;
-        justify-content: center;
-    }
-    nav div{
-        background-color: aliceblue;
-        padding: 1em;
-    }
-    nav div a{
-        color: black;
-        text-decoration: none;
-    }
-    #imageContainer{
-        display:flex;
-        flex-direction: row;
-        flex-flow:column;
-        justify-content: center;
-    }
-    .adminBlock{
-        display:block;
-        margin:auto;
-        text-align: center;
-    }
+    display: block;
+    margin-top:1em;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.fail{
+    color:red;
+}
+
+label, input{
+margin-left: auto;
+margin-right: auto;
+display: block;
+text-align: center;
+}
+nav{
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+nav div{
+    background-color: aliceblue;
+    padding: 1em;
+}
+nav div a{
+    color: black;
+    text-decoration: none;
+}
+#imageContainer{
+    display:flex;
+    flex-direction: row;
+    flex-flow:column;
+    justify-content: center;
+}
+.adminBlock{
+    display:block;
+    margin:auto;
+    text-align: center;
+}
+    
+#errMsgBox {
+    display:none;
+    top: 250px;
+    width: 250px;
+    height: 650px;
+    position: absolute;
+    z-index: 200;
+    right: 0px;
+    overflow: hidden;
+}
+
+#errMsgBox h3 {
+    width: 200px;
+    position: absolute;
+    top: 0px;
+    left: 20px;
+}
+
+#speech {
+    height: 120px;
+    width: 250px;
+    z-index:300;
+}
+
+#errorMessage {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: red;
+    font-style: italic;
+}
+
+#bigPictionaryImage {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#imageURL {
+    display: none;
+}
+
+#controlContainer * {
+    font-size: 1.2em;
+}
+
+#controlContainer button {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 0.5em;
+}

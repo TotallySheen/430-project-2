@@ -31,7 +31,7 @@ const postDrawing = (req, res) => {
   return drawingPromise;
 };
 
-const makerPage = (req, res) => res.render('make', { csrfToken: req.csrfToken() });
+const makerPage = (req, res) => res.render('app', { csrfToken: req.csrfToken() });
 
 const getDrawings = (request, response) => {
   const req = request;

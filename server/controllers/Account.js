@@ -11,7 +11,7 @@ const signupPage = (req, res) => {
 };
 
 const guessPage = (req, res) => {
-  res.render('guess', { csrfToken: req.csrfToken() });
+  res.render('app', { csrfToken: req.csrfToken() });
 };
 
 const logout = (req, res) => {
@@ -81,6 +81,25 @@ const signup = (request, response) => {
   });
 };
 
+const getUserScore = (request, response) => {
+  const req = request;
+  const res = response;
+
+  return Account.AccountModel.findByUsername(req.username, (err, doc) => {
+    if (err) {
+      console.log(err);
+      return res.status(400).json({ error: 'An error occurred' });
+    }
+
+    return res.json({ username: req.username, score: doc.score });
+  });
+}
+
+const updateUserScore = (request, response) => {
+  const req = request;
+  const res = response;
+}
+
 const getToken = (request, response) => {
   const req = request;
   const res = response;
@@ -100,4 +119,5 @@ module.exports = {
   getToken,
   signupPage,
   guessPage,
+  getUserScore,
 };
